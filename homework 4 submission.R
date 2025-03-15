@@ -87,7 +87,7 @@ mae(mod_mistletoe)
 
 # Use visual (e.g. a marginal effects plot) and written (e.g. effect sizes on scale of response) approaches to interpret the results of your model.
 
-#Based on your fitted model results and model fit, write 3-4 sentences to discuss the following biolgical conclusions: Does mistletoe infection alter seedling density? How much does seedling recruitment differ beneath parasitized and unparasitized trees? Explain which elements of your glm results informed your conclusions and annotate the steps you needed to take to interpret your parameters.
+# Based on your fitted model results and model fit, write 3-4 sentences to discuss the following biological conclusions: Does mistletoe infection alter seedling density? How much does seedling recruitment differ beneath parasitized and unparasitized trees? Explain which elements of your glm results informed your conclusions and annotate the steps you needed to take to interpret your parameters.
 
 
 # ----------------------#
@@ -95,37 +95,68 @@ mae(mod_mistletoe)
 # ----------------------#
 
 
+# Look at the results
 summary(mod_mistletoe)
-plot_predictions(mod_mistletoe, condition="Treatment")
-predictions(mod_mistletoe, newdata=data.frame(Treatment=c("parasitized", "unparasitized")))
+# From the summary table, we can see that there's a statistically significant difference in the # of seedlings under parasitized vs. non-parasitized trees (p < 0.05). However, since we used a negative binomial distribution with a log link function, we can't interpret the intercept or beta-estimate directly. Instead, we have to use plot_predictions() and predictions() from the marginaleffects package to interpret (we could also do it by hand with exp(5.7308) & exp(5.7308- 3.1575) since the model is so simple, but the functions are better).
 
-# From summary table:
+# In plot_predictions(), the first argument is the model, the "condition =" argument is the dependent variable/what you want on the x-axis/to be compared
+plot_predictions(mod_mistletoe, condition = "Treatment")
+# Immediately, we can see that as predicted, seedling recruitment is higher under trees that have been parasitized by mistletoe vs. those that have not been parasitized - we know this by looking at the points (mean seedling density, y-axis) for each treatment on the x-axis.
 
-# We know that there's a statistically significant difference in the # of seedlings under parasitized vs. non-parasitized trees (p < 0.05). We can't directly interpret the beta-coefficients without doing a backtransformation. 
-
-# From plot_predictions:
-
-# There are more seedlings under trees with mistletoe parasites. 
-
+# Using predictions(), you can get the same data/values in a numeric format. The first argument is the model and I'm not 100% sure what the "newdata = data.frame()" argument is doing beyond you tell it what you want to interpret. So in this case, we want to know the effect of mistletoe treatment (dependent variable, which will become the rows in the table the function will create representing "parasitized" and "unparasitizied" treatments) on seedling recruitment (the values, backtransformed to be on the scale of the response variable)
+predictions(mod_mistletoe, newdata = data.frame(Treatment = c("parasitized", "unparasitized")))
+# In the table, we can see the same numbers as in our figure. The top row is (I think) the mean number of seedlings under parasitized trees with 95% CIs (mean = 308.2, not sure why the upper CI is slightly larger than the lower CI?). The bottom row is (I think) the mean number of seedlings under unparasitized trees. 
 
 
+# To summarize/interpret our findings in a paper, we could write something like:
 
-## 1c) 
+# Mistletoe infection has a statistically significant impact on seedling density (p < 0.05). Mean seedling density in the 5m2 plots under trees parasitized by mistletoe was 308.2 , while mean seedling density in the same area under trees without mistletoe was only 13.1. This represents a 23.5% increase in recruitment.
+
+
+# ------------------------#
+# ....1c) question.....####
+# ------------------------#
+
 
 # During the course of this study, 2012 was an atypically rainy year, compared to 2011. Fit an additional glm that quantifies how the effect of mistletoe differs between the two years in this study. Write ~2 new sentences that summarize the results of the new model and their biological implications.
 
-# Interaction 
-mod3 <- glm.nb(Seedlings ~ Treatment * as.factor(Year), data = mistletoe)
-summary(mod3)
 
-plot_predictions(mod3, condition=c("Year", "Treatment"))
-
-predictions(mod3, newdata=data.frame(Treatment=c("parasitized", "unparasitized"),
-                                     Year =c("2011", "2011",
-                                             "2012", "2012")))
+# ----------------------#
+# ....1c) answer.....####
+# ----------------------#
 
 
-## Question 2:
+# Because we want to look at how different years influences the magnitude of mistletoe's effect, we want to add Year as an interaction in the model. We want to add Year as an interaction term vs. an second variable because we aren't interested in how Year influences an overall mean Seedlings (lumping seedling recruitment from both parasitized and unparasitized trees together) - we still want to know how mistletoe alters recruitment, just across a range of years that may differ in some way (in this case, amount of rain)... I think
+mod_mistletoe_yrInt <- glm.nb(Seedlings ~ Treatment * as.factor(Year), data = mistletoe)
+
+# We can look at the results to see significances, but just like before, we have to do a backtransformation before we can interpret them.
+summary(mod_mistletoe_yrInt)
+# We can see that this summary table has two additional rows. (Intercept) is now mean seedling density under parasitized trees in 2011, Treatmentunparasitized is mean seedling density under unparasitized trees in 2011, as.factor(Year)2012 is mean seedling density under parasitized trees in 2012, Treatmentunparasitized:as.factor(Year)2012 is s mean seedling density under unparasitized trees in 2012. 
+
+# For this model specifically, I am a little confused  on interpreting significance (some results are very significant and other aren't, I can't remember if you look at each line seperately or some together). Best guess - we can see that there is a statistically significant impact of mistletoe on seedling recruitment in 2011 (p < 0.05 for both (Intercept) and Treatmentunparasitized), and a nearly significant relationship of mistletoe on seedling recruitment in 2012 (p = 0.07 for as.factor(Year)2012 and p = 0.06 for Treatmentunparasitized:as.factor(Year)2012)
+
+# When you're interpreting results from a model with an interaction, to get effect sizes, you have to add or subtract the value in one line from another one (and maybe also from the Intercept??), but I can't remember exactly. Instead, we can just use our functions from the marginaleffects package with slightly fancier arguments.
+
+# To plot correctly, now the "condition = " argument has to include both the interaction (listed first) and the dependent variable
+plot_predictions(mod_mistletoe_yrInt, condition = c("Year", "Treatment"))
+# We can see that there's still higher seedling density under parasitized trees vs. non-parasitized trees, but that overall there was higher seedling recruitment in 2012 (the atypically rainy year) for both treatments than in 2011.
+
+# Just like before, we can get the same values in a numeric table. This time, we want our dataframe to include mean seedling recruitment for parasitized trees in 2011, unparasitized trees in 2011, parasitized trees in 2012, and unparasitized trees in 2012. The order of Year values is important - c("2011", "2012", "2011", "2012") would give you incorrect results - but I'm not exactly sure why you list them in the argument like you do... basically, why do we have to repeat Year but not Treatment?
+predictions(mod_mistletoe_yrInt, newdata = data.frame(Treatment= c("parasitized", "unparasitized"),
+                                                      Year = c("2011", "2011", "2012", "2012")))
+# We can see the same numbers as in the plot! Also, important to note that the means of the parasitized/unparasitized seedling densities between the two years is want we got from the model without the interaction. So the interaction gives us more specific, non-pooled results for when there might be variation in some variable. 
+
+# Our new results may add: 
+
+# Interannual variation (e.g., amount of precipitation) had a near significant impact on the relationship between seedling recruitment and mistletoe parasitism. In both 2011 and 2012, seedling density was higher under parasitized trees, but that relationship was even stronger in 2012, an unusually wet year.
+
+
+#---------------------------------------------------------------#
+#---------------------------------------------------------------#
+# QUESTION 2: TREE MORTALITY IN THINNED AND UNTHINNED FORESTS####
+#---------------------------------------------------------------#
+#---------------------------------------------------------------#
+
 
 treemortality <- read.csv("treemortality.csv")
 head(treemortality)
