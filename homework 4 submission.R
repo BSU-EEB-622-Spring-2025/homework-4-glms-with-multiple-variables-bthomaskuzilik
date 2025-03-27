@@ -79,6 +79,8 @@ summary(mod_mistletoe)
 mae(mod_mistletoe)
 # I couldn't really find we talked about this, but I think you interpret it on the scale of the response variable. So in this case, we get a mae = 145.8 seedlings, which I think is (maybe) an error metric that is telling us our model may be off by +/- 145.8 seedlings. This doesn't seem that bad when you consider that max(mistletoe$Seedlings) = 2472.
 
+## ASW: lovely! I agree! It's not the best fit but decent considering that range!
+
 
 # ------------------------#
 # ....1b) question.....####
@@ -103,9 +105,15 @@ summary(mod_mistletoe)
 plot_predictions(mod_mistletoe, condition = "Treatment")
 # Immediately, we can see that as predicted, seedling recruitment is higher under trees that have been parasitized by mistletoe vs. those that have not been parasitized - we know this by looking at the points (mean seedling density, y-axis) for each treatment on the x-axis.
 
-# Using predictions(), you can get the same data/values in a numeric format. The first argument is the model and I'm not 100% sure what the "newdata = data.frame()" argument is doing beyond you tell it what you want to interpret. So in this case, we want to know the effect of mistletoe treatment (dependent variable, which will become the rows in the table the function will create representing "parasitized" and "unparasitizied" treatments) on seedling recruitment (the values, backtransformed to be on the scale of the response variable)
+# Using predictions(), you can get the same data/values in a numeric format. The first argument is the model and I'm not 100% sure what the "newdata = data.frame()" argument is doing beyond you tell it what you want to interpret. 
+
+#ASW: the newdata argument is which values we'd like to create the predictions for... so here, we are asking for a prediction (on the scale of the response) for unparasitized and parasitized trees.
+
+##So in this case, we want to know the effect of mistletoe treatment (dependent variable, which will become the rows in the table the function will create representing "parasitized" and "unparasitizied" treatments) on seedling recruitment (the values, backtransformed to be on the scale of the response variable)
 predictions(mod_mistletoe, newdata = data.frame(Treatment = c("parasitized", "unparasitized")))
 # In the table, we can see the same numbers as in our figure. The top row is (I think) the mean number of seedlings under parasitized trees with 95% CIs (mean = 308.2, not sure why the upper CI is slightly larger than the lower CI?). The bottom row is (I think) the mean number of seedlings under unparasitized trees. 
+
+## ASW: The lower CI is because of the link function, which constrains to positive values (the CI gets squished, if you will, as we get closer to 0.)
 
 
 # To summarize/interpret our findings in a paper, we could write something like:
@@ -135,6 +143,8 @@ summary(mod_mistletoe_yrInt)
 
 # For this model specifically, I am a little confused  on interpreting significance (some results are very significant and other aren't, I can't remember if you look at each line seperately or some together). Best guess - we can see that there is a statistically significant impact of mistletoe on seedling recruitment in 2011 (p < 0.05 for both (Intercept) and Treatmentunparasitized), and a nearly significant relationship of mistletoe on seedling recruitment in 2012 (p = 0.07 for as.factor(Year)2012 and p = 0.06 for Treatmentunparasitized:as.factor(Year)2012)
 
+## ASW: IN this case, the difference between unparasitized trees and parasitized trees is significant, but the differences in seedlings between 2011-2012 are only marginally so, and there is a marginal interaction (suggesting that the effect of parasitization was slightly less distinct (more positive) in 2012)
+
 # When you're interpreting results from a model with an interaction, to get effect sizes, you have to add or subtract the value in one line from another one (and maybe also from the Intercept??), but I can't remember exactly. Instead, we can just use our functions from the marginaleffects package with slightly fancier arguments.
 
 # To plot correctly, now the "condition = " argument has to include both the interaction (listed first) and the dependent variable
@@ -149,6 +159,10 @@ predictions(mod_mistletoe_yrInt, newdata = data.frame(Treatment= c("parasitized"
 # Our new results may add: 
 
 # Interannual variation (e.g., amount of precipitation) had a near significant impact on the relationship between seedling recruitment and mistletoe parasitism. In both 2011 and 2012, seedling density was higher under parasitized trees, but that relationship was even stronger in 2012, an unusually wet year.
+
+## ASW: Good! Except that the relationship is a bit weaker on the logged scale because a positive term is added to an initially negative effect for "unparasitized trees"
+
+## ASW: Great joB! 29/30
 
 
 #---------------------------------------------------------------#
@@ -183,6 +197,8 @@ test_roc <- roc(treemortality$mortality ~ test_prob,
 # AUC = 0.710
 
 
+## ASW: Write 2-4 sentences interpreting the effects here!
+
 ## 2b)
 
 # LOOK AT COLLINEARARITY EXAMPLE.
@@ -190,7 +206,11 @@ test_roc <- roc(treemortality$mortality ~ test_prob,
 
 # Because they randomized their experimental design, the researchers removed the confounding influence of tree size on thinning and therefore they don't need to include it in their model. There is no correlation structure, so there won't be an impact on the effect size 
 
+## ASW: Yes! grasshopper! exactly right.
+
 # CAN PUT IT IN THE MODEL AND TEST THIS
+
+## ASW: Coefficient should be stable with or without the tree size variable.
 
 ## 2c) 
 
@@ -214,8 +234,13 @@ plot_predictions(mod_tree, condition = c("thinning"))
 
 # The estimate decreases, the relationship between thinning and mortality was confounded by slope and roaddist - so we were overestimating the effect size. When we included slope and roaddist into our model as suggested, we still see there is a negative relationship, but it is smaller (look at the predictions() table values)
 
+## ASW: Right! The key thing here is that slope and distance from roads are biasing the effect of thinning in the first model, making it appear more effective than it is because of the fact that thinning treatments are more likely to occur in locations where fire severity is already lower (closer to roads, on shallower slopes). The predicted effect of thinning in the first model is a decrease in mortality from 73% to 29%, but in the second model, this effect decreases (Mortality decreases from 54% to 29%).
+
+
 # THESE PLOTS TELL YOU THE RELATIONSHIPS BETWEEN THE ADDED VARIABLES AND MORTALITY (ASSUMES YOU ARE HOLDING xxx SOMETHING I CAN'T REMEMBER CONSTANT)
 plot_predictions(mod_tree_dag, condition=c("roaddist", "thinning"))
 plot_predictions(mod_tree_dag, condition=c("slope", "thinning"))
 
 
+## ASW: Nice work, Becca! 18/20
+## 47/50
